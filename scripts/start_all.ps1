@@ -29,3 +29,5 @@ Write-Host '=== starting rednesscam feed ==='
 Write-Host 'Discord: set Camera to RednessCam / Windows Virtual Camera Device'
 Write-Host ("Command: py " + ($args -join ' '))
 & py @args
+
+# End of start_all
