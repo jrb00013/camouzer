@@ -67,3 +67,6 @@ GPL-2.0-or-later (native bridge derived from BestCam). See `native/LICENSE` and 
 ## Repo
 
 GitHub: https://github.com/jrb00013/rednesscam
+
+## Strength tips
+Start at 0.45; raise toward 0.7 only if vessels still show.
