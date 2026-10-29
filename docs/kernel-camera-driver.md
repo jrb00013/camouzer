@@ -71,3 +71,6 @@ Discord
 - You need multiple simultaneous virtual devices with custom KS properties.
 
 Until then: keep the Python filter, keep SHM, swap only the sink if you graduate to `.sys`.
+
+# Build tip
+Prefer C:\\Users\\josep\\rednesscam for MSVC builds.
