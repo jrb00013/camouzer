@@ -63,3 +63,7 @@ soft = reduce_redness(frame, strength=0.5)
 ## License
 
 GPL-2.0-or-later (native bridge derived from BestCam). See `native/LICENSE` and root `LICENSE`.
+
+## Repo
+
+GitHub: https://github.com/jrb00013/rednesscam
