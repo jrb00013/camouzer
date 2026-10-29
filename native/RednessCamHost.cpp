@@ -164,8 +164,10 @@ int main()
     }
 
     HostLog("========================================================");
-    HostLog("  RednessCam is LIVE - select it in Discord");
-    HostLog("  Then: py -m rednesscam run --strength 0.45");
+    HostLog("  RednessCam is LIVE");
+    HostLog("  In Teams: Devices -> Camera -> RednessCam");
+    HostLog("  (shown as 'RednessCam Windows Virtual Camera')");
+    HostLog("  Then run: py -m rednesscam run --strength 0.75");
     HostLog("========================================================");
 
     WaitUntilStop();

@@ -40,8 +40,8 @@ HRESULT VirtualCamMediaStream::RuntimeClassInitialize(VirtualCamMediaSource* pSo
 
 HRESULT VirtualCamMediaStream::CreateDefaultMediaType(IMFMediaType** ppMediaType)
 {
-    const UINT32 WIDTH  = 1920;
-    const UINT32 HEIGHT = 1080;
+    const UINT32 WIDTH  = 1280;
+    const UINT32 HEIGHT = 720;
     const UINT32 STRIDE = WIDTH;
     // NV12 format size: Y plane + (UV plane)
     const UINT32 SAMPLE_SIZE = WIDTH * HEIGHT * 3 / 2;
@@ -185,13 +185,35 @@ STDMETHODIMP VirtualCamMediaStream::RequestSample(IUnknown* pToken)
 
 void VirtualCamMediaStream::QueueBlankSample(IUnknown* pToken)
 {
+    // Teams / Camera app reject empty IMFSamples. Always deliver a full NV12 frame.
+    const DWORD WIDTH = 1280;
+    const DWORD HEIGHT = 720;
+    const DWORD FRAME_LEN = WIDTH * HEIGHT * 3 / 2;
+
     Microsoft::WRL::ComPtr<IMFSample> sample;
-    if (SUCCEEDED(MFCreateSample(&sample)))
-    {
-        if (pToken)
-            sample->SetUnknown(MFSampleExtension_Token, pToken);
-        _eventQueue->QueueEventParamUnk(MEMediaSample, GUID_NULL, S_OK, sample.Get());
-    }
+    if (FAILED(MFCreateSample(&sample)))
+        return;
+
+    Microsoft::WRL::ComPtr<IMFMediaBuffer> buffer;
+    if (FAILED(MFCreateMemoryBuffer(FRAME_LEN, &buffer)))
+        return;
+
+    BYTE* dst = nullptr;
+    if (FAILED(buffer->Lock(&dst, nullptr, nullptr)))
+        return;
+
+    // Neutral gray NV12: Y=128, UV=128
+    memset(dst, 128, FRAME_LEN);
+    buffer->Unlock();
+    buffer->SetCurrentLength(FRAME_LEN);
+
+    sample->AddBuffer(buffer.Get());
+    sample->SetSampleTime(MFGetSystemTime());
+    sample->SetSampleDuration(333333);
+    if (pToken)
+        sample->SetUnknown(MFSampleExtension_Token, pToken);
+
+    _eventQueue->QueueEventParamUnk(MEMediaSample, GUID_NULL, S_OK, sample.Get());
 }
 
 void VirtualCamMediaStream::Shutdown()

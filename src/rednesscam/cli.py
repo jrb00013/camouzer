@@ -14,11 +14,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     run = sub.add_parser("run", help="Capture webcam → filter → virtual cam")
-    run.add_argument("--camera", type=int, default=0, help="OpenCV camera index (default 0)")
+    run.add_argument("--camera", type=int, default=1, help="OpenCV camera index (default 1 = Logitech on this PC)")
     run.add_argument(
         "--device-name",
-        default="Logitech Webcam C930e",
-        help="DirectShow/MSMF device name (default: Logitech Webcam C930e)",
+        default=None,
+        help="Optional DirectShow/MSMF device name (default: open by --camera index)",
     )
     run.add_argument(
         "--strength",

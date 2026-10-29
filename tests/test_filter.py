@@ -22,7 +22,7 @@ def test_strength_zero_is_identity():
 def test_bgr_to_nv12_size():
     from rednesscam.filter import bgr_to_nv12
 
-    frame = np.zeros((1080, 1920, 3), dtype=np.uint8)
-    nv12 = bgr_to_nv12(frame, 1920, 1080)
-    assert nv12.shape == (1920 * 1080 * 3 // 2,)
+    frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+    nv12 = bgr_to_nv12(frame, 1280, 720)
+    assert nv12.shape == (1280 * 720 * 3 // 2,)
     assert nv12.dtype == np.uint8

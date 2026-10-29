@@ -73,4 +73,4 @@ Discord
 Until then: keep the Python filter, keep SHM, swap only the sink if you graduate to `.sys`.
 
 # Build tip
-Prefer C:\\Users\\josep\\rednesscam for MSVC builds.
+Build from a Windows NTFS checkout (not a `\\wsl$` UNC path) so MSVC/CMake work cleanly.

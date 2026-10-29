@@ -10,15 +10,14 @@ from ctypes import wintypes
 SHARED_MEM_NAME = "Global\\RednessCam_SharedMem"
 MUTEX_NAME = "Global\\RednessCam_Mutex"
 
-TARGET_WIDTH = 1920
-TARGET_HEIGHT = 1080
+# Keep in sync with native/FrameServer.cpp + MediaStream.cpp
+TARGET_WIDTH = 1280
+TARGET_HEIGHT = 720
 FRAME_SIZE = TARGET_WIDTH * TARGET_HEIGHT * 3 // 2
 HEADER_SIZE = 24
 TOTAL_SIZE = HEADER_SIZE + FRAME_SIZE
 
 FILE_MAP_ALL_ACCESS = 0x000F001F
-WAIT_OBJECT_0 = 0
-INFINITE = 0xFFFFFFFF
 
 
 class SharedMemoryWriter:
@@ -62,7 +61,7 @@ class SharedMemoryWriter:
         if not self._h_map:
             raise RuntimeError(
                 "Could not open Global\\RednessCam_SharedMem. "
-                "Start RednessCamHost.exe (as Administrator after regsvr32) first."
+                "Start RednessCamHost.exe first."
             )
 
         ptr = self._k32.MapViewOfFile(self._h_map, FILE_MAP_ALL_ACCESS, 0, 0, TOTAL_SIZE)
@@ -70,12 +69,10 @@ class SharedMemoryWriter:
             raise RuntimeError("MapViewOfFile failed for RednessCam shared memory.")
         self._ptr = ptr
 
-        # Mutex is optional but preferred.
         SYNCHRONIZE = 0x00100000
         MUTEX_ALL = 0x1F0001
         self._h_mutex = self._k32.OpenMutexW(MUTEX_ALL | SYNCHRONIZE, False, MUTEX_NAME)
 
-        # Stamp expected dimensions for consumers.
         header = struct.pack(
             "<4IQ",
             TARGET_WIDTH,
@@ -86,11 +83,27 @@ class SharedMemoryWriter:
         )
         ctypes.memmove(self._ptr, header, HEADER_SIZE)
 
-    def write_nv12(self, nv12: bytes | memoryview) -> None:
-        if len(nv12) != FRAME_SIZE:
-            raise ValueError(f"NV12 size must be {FRAME_SIZE}, got {len(nv12)}")
+    def write_nv12(self, nv12) -> None:
+        import numpy as np
+
+        if isinstance(nv12, np.ndarray):
+            if nv12.size != FRAME_SIZE:
+                raise ValueError(f"NV12 size must be {FRAME_SIZE}, got {nv12.size}")
+            payload = np.ascontiguousarray(nv12, dtype=np.uint8)
+            buf = payload.ctypes.data
+            nbytes = FRAME_SIZE
+        else:
+            if len(nv12) != FRAME_SIZE:
+                raise ValueError(f"NV12 size must be {FRAME_SIZE}, got {len(nv12)}")
+            payload = bytes(nv12)
+            buf = None
+            nbytes = FRAME_SIZE
+
+        got_mutex = False
         if self._h_mutex:
-            self._k32.WaitForSingleObject(self._h_mutex, 50)
+            # Don't stall the producer if Frame Server holds the lock.
+            wr = self._k32.WaitForSingleObject(self._h_mutex, 5)
+            got_mutex = wr == 0  # WAIT_OBJECT_0
         try:
             self._frame_index += 1
             header = struct.pack(
@@ -102,9 +115,12 @@ class SharedMemoryWriter:
                 self._frame_index,
             )
             ctypes.memmove(self._ptr, header, HEADER_SIZE)
-            ctypes.memmove(self._ptr + HEADER_SIZE, bytes(nv12), FRAME_SIZE)
+            if buf is not None:
+                ctypes.memmove(self._ptr + HEADER_SIZE, buf, nbytes)
+            else:
+                ctypes.memmove(self._ptr + HEADER_SIZE, payload, nbytes)
         finally:
-            if self._h_mutex:
+            if got_mutex and self._h_mutex:
                 self._k32.ReleaseMutex(self._h_mutex)
 
     def close(self) -> None:

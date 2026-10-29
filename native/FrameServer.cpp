@@ -3,8 +3,8 @@
 // ============================================================================
 #include "FrameServer.h"
 
-// 24 bytes header + NV12 frame size (1920x1080)
-static const DWORD TOTAL_MEM_SIZE = 24 + 1920 * 1080 * 3 / 2;
+// 24 bytes header + NV12 frame size (1280x720) — keep in sync with Python shm.py
+static const DWORD TOTAL_MEM_SIZE = 24 + 1280 * 720 * 3 / 2;
 
 FrameServer::FrameServer()
     : _hMapFile(nullptr)
@@ -69,10 +69,10 @@ HRESULT FrameServer::Initialize()
     // Zero-initialize and set up default metadata so the companion script 
     // knows the dimensions we expect.
     ZeroMemory(_header, sizeof(SharedMemHeader));
-    _header->width     = 1920;
-    _header->height    = 1080;
-    _header->stride    = 1920;
-    _header->frameSize = 1920 * 1080 * 3 / 2;
+    _header->width     = 1280;
+    _header->height    = 720;
+    _header->stride    = 1280;
+    _header->frameSize = 1280 * 720 * 3 / 2;
 
     // Create the cross-process mutex (non-fatal if this fails, we can run lockless)
     _hMutex = CreateMutexW(&sa, FALSE, MUTEX_NAME);

@@ -1,6 +1,9 @@
 # Install RednessCam to ProgramData, register COM, start host.
 $ErrorActionPreference = "Stop"
-$Root = 'C:\Users\josep\rednesscam'
+$Root = Split-Path -Parent $PSScriptRoot
+if ($Root -like '\\wsl*\*' -or $Root -like '\\wsl.localhost\*') {
+    throw "Run from a Windows checkout, not a WSL UNC path."
+}
 
 $BuiltDll = Get-ChildItem -Recurse (Join-Path $Root 'native\build') -Filter RednessCamSource.dll |
     Select-Object -First 1
@@ -15,7 +18,6 @@ New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 $Dll = Join-Path $Dest 'RednessCamSource.dll'
 $HostExe = Join-Path $Dest 'RednessCamHost.exe'
 
-# Signal + kill host so we can replace binaries.
 try {
     $stop = New-Object -TypeName System.Threading.EventWaitHandle -ArgumentList @($false, 'ManualReset', 'Global\RednessCam_Shutdown')
     [void]$stop.Set()
@@ -42,7 +44,6 @@ Copy-Item $BuiltDll.FullName $Dll -Force
 Copy-Item $BuiltHost.FullName $HostExe -Force
 icacls $Dest /grant '*S-1-1-0:(OI)(CI)(RX)' /T | Out-Null
 
-# Prune old backups (keep 3)
 Get-ChildItem $Dest -Filter 'RednessCamSource.dll.bak.*' |
     Sort-Object LastWriteTime -Descending |
     Select-Object -Skip 3 |

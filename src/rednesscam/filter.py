@@ -1,4 +1,4 @@
-"""Facial redness reduction (blood-vessel / flush softening)."""
+"""Facial redness reduction — fast path for live Teams/Discord."""
 
 from __future__ import annotations
 
@@ -6,62 +6,34 @@ import numpy as np
 
 
 def reduce_redness(bgr: np.ndarray, strength: float = 0.45) -> np.ndarray:
-    """Attenuate red-ward chroma in skin-like LAB regions.
-
-    Parameters
-    ----------
-    bgr:
-        HxWx3 uint8 BGR frame.
-    strength:
-        0 = no change, 1 = aggressive a-channel pull toward neutral on skin.
-    """
+    """Pull red flush down cheaply (quarter-res mask, BGR only)."""
     import cv2
 
     strength = float(np.clip(strength, 0.0, 1.0))
     if strength <= 1e-6:
         return bgr
 
-    # Work on a downscaled copy for speed, then apply the a-channel delta full-res.
     h0, w0 = bgr.shape[:2]
-    scale = 0.5 if max(h0, w0) >= 1280 else 1.0
-    small = cv2.resize(bgr, (int(w0 * scale), int(h0 * scale)), interpolation=cv2.INTER_AREA) if scale < 1.0 else bgr
+    # Quarter-res work image keeps this under a few ms even at 720p/1080p.
+    sw, sh = max(1, w0 // 4), max(1, h0 // 4)
+    small = cv2.resize(bgr, (sw, sh), interpolation=cv2.INTER_AREA)
 
-    lab = cv2.cvtColor(small, cv2.COLOR_BGR2LAB)
-    L = lab[:, :, 0].astype(np.float32)
-    a = lab[:, :, 1].astype(np.float32)
-    bb = lab[:, :, 2].astype(np.float32)
+    b, g, r = cv2.split(small)
+    # Flush = red ahead of green (and a bit ahead of blue).
+    excess = cv2.subtract(r, g)
+    # Ignore tiny differences (noise / lips edge cases stay).
+    _, mask = cv2.threshold(excess, 12, 255, cv2.THRESH_BINARY)
+    mask = cv2.GaussianBlur(mask, (0, 0), sigmaX=1.2)
 
-    a_centered = a - 128.0
-    red_amount = np.clip(a_centered, 0.0, None)
-    skin = (
-        (L > 40.0)
-        & (L < 220.0)
-        & (red_amount > 4.0)
-        & (np.abs(bb - 128.0) < 55.0)
-    ).astype(np.float32)
-    skin = cv2.GaussianBlur(skin, (0, 0), sigmaX=2.0)
+    pull = (excess.astype(np.float32) * (0.75 * strength) * (mask.astype(np.float32) / 255.0))
+    r2 = np.clip(r.astype(np.float32) - pull, 0, 255).astype(np.uint8)
+    # Mild green lift so skin doesn't go gray-magenta.
+    g2 = np.clip(g.astype(np.float32) + pull * 0.15, 0, 255).astype(np.uint8)
 
-    # Delta to subtract from a (positive = less red)
-    delta_a = (red_amount * strength * skin * 0.85).astype(np.float32)
-    if scale < 1.0:
-        delta_a = cv2.resize(delta_a, (w0, h0), interpolation=cv2.INTER_LINEAR)
-
-    full = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
-    full[:, :, 1] = np.clip(full[:, :, 1] - delta_a, 0, 255)
-
-    # Light HSV sat hush on reds (also at half-res then upscaled)
-    hsv_s = cv2.cvtColor(small, cv2.COLOR_BGR2HSV)
-    h = hsv_s[:, :, 0].astype(np.float32)
-    s = hsv_s[:, :, 1].astype(np.float32)
-    red_hue = ((h < 12.0) | (h > 168.0)).astype(np.float32)
-    sat_mul = 1.0 - 0.30 * strength * red_hue * skin
-    if scale < 1.0:
-        sat_mul = cv2.resize(sat_mul, (w0, h0), interpolation=cv2.INTER_LINEAR)
-
-    out = cv2.cvtColor(full.astype(np.uint8), cv2.COLOR_LAB2BGR)
-    hsv = cv2.cvtColor(out, cv2.COLOR_BGR2HSV).astype(np.float32)
-    hsv[:, :, 1] = np.clip(hsv[:, :, 1] * sat_mul, 0, 255)
-    return cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
+    fixed = cv2.merge([b, g2, r2])
+    if (sw, sh) != (w0, h0):
+        return cv2.resize(fixed, (w0, h0), interpolation=cv2.INTER_LINEAR)
+    return fixed
 
 
 def bgr_to_nv12(bgr: np.ndarray, width: int, height: int) -> np.ndarray:
@@ -69,8 +41,7 @@ def bgr_to_nv12(bgr: np.ndarray, width: int, height: int) -> np.ndarray:
     import cv2
 
     if bgr.shape[1] != width or bgr.shape[0] != height:
-        bgr = cv2.resize(bgr, (width, height), interpolation=cv2.INTER_AREA)
-    # OpenCV returns I420 as shape (h*3/2, w) — flatten before slicing planes.
+        bgr = cv2.resize(bgr, (width, height), interpolation=cv2.INTER_LINEAR)
     i420 = np.ascontiguousarray(cv2.cvtColor(bgr, cv2.COLOR_BGR2YUV_I420)).reshape(-1)
     y_size = width * height
     u = i420[y_size : y_size + y_size // 4]

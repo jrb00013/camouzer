@@ -14,32 +14,20 @@ from .shm import TARGET_HEIGHT, TARGET_WIDTH, SharedMemoryWriter
 
 
 def _test_pattern(frame_index: int) -> np.ndarray:
-    """BGR test pattern so Discord still shows a live feed without a webcam."""
     img = np.zeros((TARGET_HEIGHT, TARGET_WIDTH, 3), dtype=np.uint8)
-    # Soft skin-ish tone so strength tuning is visible later.
     img[:, :] = (110, 140, 190)
     x = int((frame_index * 7) % (TARGET_WIDTH - 120))
     y = int((frame_index * 5) % (TARGET_HEIGHT - 80))
-    img[y : y + 80, x : x + 120] = (60, 80, 220)  # moving red patch
+    img[y : y + 80, x : x + 120] = (60, 80, 220)
     import cv2
 
     cv2.putText(
         img,
-        f"RednessCam test pattern #{frame_index}",
-        (40, 80),
+        f"RednessCam test #{frame_index}",
+        (40, 60),
         cv2.FONT_HERSHEY_SIMPLEX,
-        1.4,
+        1.2,
         (20, 20, 20),
-        3,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        img,
-        "Switch Discord to RednessCam, free the Logitech, rerun without --test-pattern",
-        (40, 140),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        (30, 30, 30),
         2,
         cv2.LINE_AA,
     )
@@ -47,7 +35,7 @@ def _test_pattern(frame_index: int) -> np.ndarray:
 
 
 def run_pipeline(
-    camera_index: int = 0,
+    camera_index: int = 1,
     strength: float = 0.45,
     preview: bool = False,
     max_frames: Optional[int] = None,
@@ -55,11 +43,6 @@ def run_pipeline(
     device_name: Optional[str] = None,
     allow_test_fallback: bool = True,
 ) -> None:
-    """Capture, filter, and publish until interrupted.
-
-    Requires RednessCamHost.exe already running so shared memory exists.
-    Discord must use camera device **RednessCam**, not the raw Logitech.
-    """
     if sys.platform != "win32":
         raise RuntimeError("rednesscam virtual-camera output requires Windows.")
 
@@ -68,25 +51,43 @@ def run_pipeline(
     cap = None
     using_pattern = test_pattern
     if not test_pattern:
-        print(f"[rednesscam] opening camera index={camera_index} name={device_name!r}")
+        cam_name = device_name or "Logitech Webcam C930e"
+        print(f"[rednesscam] opening camera via ffmpeg MJPG ({cam_name})", flush=True)
         try:
-            cap = open_camera(
-                camera_index,
-                TARGET_WIDTH,
-                TARGET_HEIGHT,
-                device_name=device_name,
-            )
-        except RuntimeError as exc:
-            if not allow_test_fallback:
-                raise
-            print(f"[rednesscam] WARN: {exc}")
-            print("[rednesscam] falling back to test pattern so the virtual cam stays alive")
-            using_pattern = True
+            from .ffmpeg_capture import FFmpegCamera
 
-    print("[rednesscam] connecting to RednessCam shared memory (host must be running)...")
+            cap = FFmpegCamera(
+                device_name=cam_name,
+                width=TARGET_WIDTH,
+                height=TARGET_HEIGHT,
+                fps=30,
+            )
+            ok, probe = cap.read()
+            if not ok or probe is None:
+                raise RuntimeError("ffmpeg opened but first frame failed")
+            print(f"[rednesscam] ffmpeg frame ok shape={probe.shape}", flush=True)
+        except Exception as exc:
+            print(f"[rednesscam] ffmpeg path failed ({exc}); trying OpenCV", flush=True)
+            try:
+                cap = open_camera(
+                    camera_index,
+                    TARGET_WIDTH,
+                    TARGET_HEIGHT,
+                    fps=30,
+                    device_name=device_name,
+                )
+            except RuntimeError as exc2:
+                if not allow_test_fallback:
+                    raise
+                print(f"[rednesscam] WARN: {exc2}", flush=True)
+                print("[rednesscam] falling back to test pattern", flush=True)
+                using_pattern = True
+                cap = None
+
+    print("[rednesscam] connecting to RednessCam shared memory...", flush=True)
     writer = SharedMemoryWriter(timeout_s=90.0)
     mode = "test-pattern" if using_pattern else f"camera strength={strength:.2f}"
-    print(f"[rednesscam] live — {mode}. Ctrl+C to stop.")
+    print(f"[rednesscam] live — {mode} @ {TARGET_WIDTH}x{TARGET_HEIGHT}. Ctrl+C to stop.", flush=True)
 
     frames = 0
     t0 = time.time()
@@ -94,21 +95,19 @@ def run_pipeline(
         while True:
             if using_pattern:
                 frame = _test_pattern(frames)
-                filtered = reduce_redness(frame, strength=strength)
             else:
                 assert cap is not None
                 ok, frame = cap.read()
                 if not ok:
-                    time.sleep(0.01)
                     continue
-                filtered = reduce_redness(frame, strength=strength)
 
+            filtered = reduce_redness(frame, strength=strength)
             nv12 = bgr_to_nv12(filtered, TARGET_WIDTH, TARGET_HEIGHT)
             writer.write_nv12(nv12)
             frames += 1
 
             if preview:
-                shown = cv2.resize(filtered, (960, 540))
+                shown = cv2.resize(filtered, (640, 360))
                 cv2.imshow("RednessCam preview (q quits)", shown)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
@@ -116,12 +115,12 @@ def run_pipeline(
             if max_frames is not None and frames >= max_frames:
                 break
 
-            if frames % 120 == 0:
+            if frames == 1 or frames % 60 == 0:
                 elapsed = time.time() - t0
                 fps = frames / elapsed if elapsed else 0.0
-                print(f"[rednesscam] frames={frames} ~{fps:.1f} fps")
+                print(f"[rednesscam] frames={frames} ~{fps:.1f} fps", flush=True)
     except KeyboardInterrupt:
-        print("\n[rednesscam] stopping...")
+        print("\n[rednesscam] stopping...", flush=True)
     finally:
         writer.close()
         if cap is not None:

@@ -21,3 +21,8 @@ Do not commit host.log or feed logs from ProgramData.
 feed*.log
 run_*.txt
 host.log
+
+bench_ff*.py
+ff.raw
+ff.err.txt
+*.raw

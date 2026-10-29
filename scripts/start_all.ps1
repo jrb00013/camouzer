@@ -1,4 +1,4 @@
-# Full bring-up: rebuild (optional) → install host → run Python feed.
+# Full bring-up: rebuild (optional) -> install host -> run Python feed.
 param(
     [switch]$SkipBuild,
     [double]$Strength = 0.45,
@@ -7,7 +7,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Root = 'C:\Users\josep\rednesscam'
+$Root = Split-Path -Parent $PSScriptRoot
+if ($Root -like '\\wsl*\*' -or $Root -like '\\wsl.localhost\*') {
+    throw "Run from a Windows checkout, not a WSL UNC path."
+}
 Set-Location $Root
 
 if (-not $SkipBuild) {
@@ -26,8 +29,6 @@ if ($TestPattern) { $args += '--test-pattern' }
 if ($Preview) { $args += '--preview' }
 
 Write-Host '=== starting rednesscam feed ==='
-Write-Host 'Discord: set Camera to RednessCam / Windows Virtual Camera Device'
+Write-Host 'Teams: Devices -> Camera -> RednessCam (Windows Virtual Camera)'
 Write-Host ("Command: py " + ($args -join ' '))
 & py @args
-
-# End of start_all
