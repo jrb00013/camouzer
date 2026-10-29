@@ -1,0 +1,10 @@
+GNU GENERAL PUBLIC LICENSE
+Version 2, June 1991
+
+This project is licensed under the GNU General Public License v2.0 or later.
+
+The native Windows virtual-camera stack in `native/` is adapted from BestCam
+(https://github.com/OneLimeStudio/BestCam), which is GPL-2.0. The combined work
+(including the Python package) is distributed under GPL-2.0-or-later.
+
+See `native/LICENSE` for the full GPL-2.0 text.
