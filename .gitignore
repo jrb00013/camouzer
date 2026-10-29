@@ -15,3 +15,9 @@ native/build/
 CMakeCache.txt
 CMakeFiles/
 *.log
+
+# Security
+Do not commit host.log or feed logs from ProgramData.
+feed*.log
+run_*.txt
+host.log
