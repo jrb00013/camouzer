@@ -79,7 +79,7 @@ class FFmpegCamera:
             str(fps),
             "pipe:1",
         ]
-        print(f"[rednesscam] ffmpeg capture: {device_name} {width}x{height}@{fps} mjpeg", flush=True)
+        print(f"[camouzer] ffmpeg capture: {device_name} {width}x{height}@{fps} mjpeg", flush=True)
         self._proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,

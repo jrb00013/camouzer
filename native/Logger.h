@@ -16,7 +16,7 @@ inline void Log(const char* fmt, ...)
 
     FILE* f = nullptr;
     // Log to the root of C: to ensure accessibility from Session 0 (LOCAL SERVICE)
-    if (fopen_s(&f, "C:\\RednessCam.log", "a") == 0)
+    if (fopen_s(&f, "C:\\Camouzer.log", "a") == 0)
     {
         fprintf(f, "[%lu] %s\n", GetCurrentThreadId(), buf);
         fclose(f);

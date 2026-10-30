@@ -1,4 +1,4 @@
-# Build RednessCamSource.dll + RednessCamHost.exe (x64 Release)
+# Build CamouzerSource.dll + CamouzerHost.exe (x64 Release)
 $ErrorActionPreference = "Stop"
 
 # Repo root = parent of scripts/ (never hardcode a username path)
@@ -32,11 +32,11 @@ $batLines = @(
     'cmake --build build --config Release'
     'exit /b %ERRORLEVEL%'
 )
-$Tmp = Join-Path $env:TEMP 'rednesscam_build.bat'
+$Tmp = Join-Path $env:TEMP 'camouzer_build.bat'
 Set-Content -Path $Tmp -Value $batLines -Encoding ASCII
 cmd.exe /c $Tmp
 if ($LASTEXITCODE -ne 0) { throw "Native build failed with exit $LASTEXITCODE" }
 
 Write-Host 'Built artifacts:'
-Get-ChildItem -Recurse $Build -Include RednessCamSource.dll,RednessCamHost.exe |
+Get-ChildItem -Recurse $Build -Include CamouzerSource.dll,CamouzerHost.exe |
     ForEach-Object { Write-Host $_.FullName }

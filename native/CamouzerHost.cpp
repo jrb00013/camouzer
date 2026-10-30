@@ -1,6 +1,6 @@
 // ============================================================================
-// RednessCamHost.exe — registers RednessCam via MFCreateVirtualCamera.
-// Stays alive until ENTER (console) or Global\RednessCam_Shutdown is signaled.
+// CamouzerHost.exe — registers Camouzer via MFCreateVirtualCamera.
+// Stays alive until ENTER (console) or Global\Camouzer_Shutdown is signaled.
 // ============================================================================
 #include <windows.h>
 #include <mfvirtualcamera.h>
@@ -18,12 +18,12 @@
 using Microsoft::WRL::ComPtr;
 
 static const WCHAR* SOURCE_CLSID = L"{A7C4E291-8F12-4B6D-9E3A-1D5C8F0B4A27}";
-static const WCHAR* SHUTDOWN_EVENT = L"Global\\RednessCam_Shutdown";
+static const WCHAR* SHUTDOWN_EVENT = L"Global\\Camouzer_Shutdown";
 
 static void HostLog(const char* msg)
 {
     FILE* f = nullptr;
-    if (fopen_s(&f, "C:\\ProgramData\\RednessCam\\host.log", "a") == 0 && f) {
+    if (fopen_s(&f, "C:\\ProgramData\\Camouzer\\host.log", "a") == 0 && f) {
         fprintf(f, "%s\n", msg);
         fflush(f);
         fclose(f);
@@ -60,9 +60,9 @@ static void WaitUntilStop()
     bool consoleIn = (stdinHandle && stdinHandle != INVALID_HANDLE_VALUE &&
                       stdinType == FILE_TYPE_CHAR);
     if (consoleIn) {
-        HostLog("  Press ENTER to stop (or signal Global\\RednessCam_Shutdown).");
+        HostLog("  Press ENTER to stop (or signal Global\\Camouzer_Shutdown).");
     } else {
-        HostLog("  Running headless; signal Global\\RednessCam_Shutdown to stop.");
+        HostLog("  Running headless; signal Global\\Camouzer_Shutdown to stop.");
     }
 
     if (consoleIn) {
@@ -100,8 +100,8 @@ static void WaitUntilStop()
 
 int main()
 {
-    CreateDirectoryW(L"C:\\ProgramData\\RednessCam", nullptr);
-    HostLog("[RednessCam] host starting");
+    CreateDirectoryW(L"C:\\ProgramData\\Camouzer", nullptr);
+    HostLog("[Camouzer] host starting");
 
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
@@ -133,7 +133,7 @@ int main()
         MFVirtualCameraType_SoftwareCameraSource,
         MFVirtualCameraLifetime_Session,
         MFVirtualCameraAccess_CurrentUser,
-        L"RednessCam",
+        L"Camouzer",
         SOURCE_CLSID,
         nullptr,
         0,
@@ -142,7 +142,7 @@ int main()
 
     if (FAILED(hr)) {
         HostLogHr("[ERROR] MFCreateVirtualCamera failed", hr);
-        HostLog("        Did you run regsvr32 RednessCamSource.dll as Administrator?");
+        HostLog("        Did you run regsvr32 CamouzerSource.dll as Administrator?");
         MFShutdown();
         CoUninitialize();
         return 1;
@@ -152,7 +152,7 @@ int main()
     hr = virtualCamera->Start(nullptr);
     if (FAILED(hr)) {
         HostLogHr("[ERROR] Failed to start virtual camera", hr);
-        HostLog("        Install DLL under C:\\ProgramData\\RednessCam (not C:\\Users\\...).");
+        HostLog("        Install DLL under C:\\ProgramData\\Camouzer (not C:\\Users\\...).");
         if (virtualCamera) {
             virtualCamera->Stop();
             virtualCamera->Shutdown();
@@ -164,20 +164,20 @@ int main()
     }
 
     HostLog("========================================================");
-    HostLog("  RednessCam is LIVE");
-    HostLog("  In Teams: Devices -> Camera -> RednessCam");
-    HostLog("  (shown as 'RednessCam Windows Virtual Camera')");
-    HostLog("  Then run: py -m rednesscam run --strength 0.75");
+    HostLog("  Camouzer is LIVE");
+    HostLog("  In Teams: Devices -> Camera -> Camouzer");
+    HostLog("  (shown as 'Camouzer Windows Virtual Camera')");
+    HostLog("  Then run: py -m camouzer run --strength 0.75");
     HostLog("========================================================");
 
     WaitUntilStop();
 
-    HostLog("[RednessCam] Shutting down...");
+    HostLog("[Camouzer] Shutting down...");
     virtualCamera->Stop();
     virtualCamera->Shutdown();
     virtualCamera.Reset();
     MFShutdown();
     CoUninitialize();
-    HostLog("[RednessCam] done");
+    HostLog("[Camouzer] done");
     return 0;
 }

@@ -7,8 +7,8 @@
 
 // We use the Global\ namespace so the shared memory is accessible across 
 // session boundaries (from Session 0 where Frame Server runs, to the user session).
-#define SHARED_MEM_NAME L"Global\\RednessCam_SharedMem"
-#define MUTEX_NAME      L"Global\\RednessCam_Mutex"
+#define SHARED_MEM_NAME L"Global\\Camouzer_SharedMem"
+#define MUTEX_NAME      L"Global\\Camouzer_Mutex"
 
 // Data layout of the shared memory mapping
 #pragma pack(push, 1)

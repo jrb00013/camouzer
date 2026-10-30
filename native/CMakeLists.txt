@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(RednessCam LANGUAGES CXX)
+project(Camouzer LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,17 +32,17 @@ set(COMMON_INCLUDES
     "${WIN_SDK_CPPWINRT}"
 )
 
-# 1. Build the Virtual Camera COM DLL (RednessCamSource.dll)
-add_library(RednessCamSource SHARED
+# 1. Build the Virtual Camera COM DLL (CamouzerSource.dll)
+add_library(CamouzerSource SHARED
     DllMain.cpp
     MediaSource.cpp
     MediaStream.cpp
     FrameServer.cpp
-    RednessCamSource.def
+    CamouzerSource.def
 )
-target_include_directories(RednessCamSource PRIVATE ${COMMON_INCLUDES})
-target_link_directories(RednessCamSource PRIVATE "${WIN_SDK_LIB}")
-target_link_libraries(RednessCamSource PRIVATE
+target_include_directories(CamouzerSource PRIVATE ${COMMON_INCLUDES})
+target_link_directories(CamouzerSource PRIVATE "${WIN_SDK_LIB}")
+target_link_libraries(CamouzerSource PRIVATE
     mf.lib
     mfplat.lib
     mfuuid.lib
@@ -51,11 +51,11 @@ target_link_libraries(RednessCamSource PRIVATE
     advapi32.lib
 )
 
-# 2. Build the Host Executable (RednessCamHost.exe)
-add_executable(RednessCamHost RednessCamHost.cpp)
-target_include_directories(RednessCamHost PRIVATE ${COMMON_INCLUDES})
-target_link_directories(RednessCamHost PRIVATE "${WIN_SDK_LIB}")
-target_link_libraries(RednessCamHost PRIVATE
+# 2. Build the Host Executable (CamouzerHost.exe)
+add_executable(CamouzerHost CamouzerHost.cpp)
+target_include_directories(CamouzerHost PRIVATE ${COMMON_INCLUDES})
+target_link_directories(CamouzerHost PRIVATE "${WIN_SDK_LIB}")
+target_link_libraries(CamouzerHost PRIVATE
     mf.lib
     mfplat.lib
     mfuuid.lib

@@ -1,4 +1,4 @@
-"""RednessCam — reduce facial redness and publish to a Windows virtual camera."""
+"""Camouzer — reduce facial redness and publish to a Windows virtual camera."""
 
 from .filter import reduce_redness
 from .pipeline import run_pipeline

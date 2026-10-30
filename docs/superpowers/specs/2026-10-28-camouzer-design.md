@@ -1,4 +1,4 @@
-# RednessCam Design
+# Camouzer Design
 
 **Date:** 2026-10-28  
 **Status:** Approved (approach 2)  
@@ -11,19 +11,19 @@ Discord only enumerates camera devices. A Python process cannot inject frames in
 ## Chosen architecture (user-mode MF virtual camera)
 
 ```
-Logitech C930e  →  Python rednesscam  →  shared memory (NV12)
+Logitech C930e  →  Python camouzer  →  shared memory (NV12)
                                               ↓
-                         RednessCamSource.dll (IMFMediaSource)
+                         CamouzerSource.dll (IMFMediaSource)
                                               ↓
-                         RednessCamHost (MFCreateVirtualCamera)
+                         CamouzerHost (MFCreateVirtualCamera)
                                               ↓
                                     Discord / any app
 ```
 
-1. **Python library `rednesscam`** — open the physical webcam, apply redness reduction, write NV12 frames into a Global shared-memory region.
+1. **Python library `camouzer`** — open the physical webcam, apply redness reduction, write NV12 frames into a Global shared-memory region.
 2. **Native COM media source DLL** — loaded by Windows Frame Server; reads SHM; exposes a real camera device.
 3. **Host process** — calls `MFCreateVirtualCamera` + `Start`, keeps the device alive for the session.
-4. **No OBS. No Unity Capture.** Device friendly name: **RednessCam**.
+4. **No OBS. No Unity Capture.** Device friendly name: **Camouzer**.
 
 ### Redness filter
 
@@ -48,7 +48,7 @@ Native MF stack is adapted from the BestCam reference architecture (GPL-2). This
 
 ## Success criteria
 
-1. After install + `rednesscam run`, Device Manager / Discord lists **RednessCam**.
+1. After install + `camouzer run`, Device Manager / Discord lists **Camouzer**.
 2. Selecting it in Discord shows the live Logitech feed with reduced facial redness.
 3. Strength is adjustable via CLI (`--strength`).
 4. Kernel-driver path is documented for a future hard-mode rewrite.

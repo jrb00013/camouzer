@@ -48,7 +48,7 @@ HRESULT FrameServer::Initialize()
         PAGE_READWRITE,
         0,
         TOTAL_MEM_SIZE,
-        SHARED_MEM_NAME         // L"Global\\RednessCam_SharedMem"
+        SHARED_MEM_NAME         // L"Global\\Camouzer_SharedMem"
     );
 
     if (!_hMapFile)

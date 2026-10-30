@@ -71,7 +71,7 @@ def open_camera(
         got_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         got_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         print(
-            f"[rednesscam] try source={source!r} be={backend} "
+            f"[camouzer] try source={source!r} be={backend} "
             f"fourcc={fcc!r} nego={got_w}x{got_h} frame={frame.shape}",
             flush=True,
         )
@@ -98,12 +98,12 @@ def open_camera(
     if best is None:
         raise RuntimeError(
             f"Could not open camera ({last_err}). "
-            "In Teams, pick RednessCam (not Logitech) so the webcam is free."
+            "In Teams, pick Camouzer (not Logitech) so the webcam is free."
         )
 
     cap, source, backend, (score, fcc, shape) = best
     print(
-        f"[rednesscam] camera ok source={source!r} backend={backend} "
+        f"[camouzer] camera ok source={source!r} backend={backend} "
         f"fourcc={fcc!r} shape={shape} score={score}",
         flush=True,
     )

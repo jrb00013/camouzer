@@ -1,6 +1,6 @@
 import numpy as np
 
-from rednesscam.filter import reduce_redness
+from camouzer.filter import reduce_redness
 
 
 def test_reduce_redness_lowers_red_channel_on_flush():
@@ -20,7 +20,7 @@ def test_strength_zero_is_identity():
 
 
 def test_bgr_to_nv12_size():
-    from rednesscam.filter import bgr_to_nv12
+    from camouzer.filter import bgr_to_nv12
 
     frame = np.zeros((720, 1280, 3), dtype=np.uint8)
     nv12 = bgr_to_nv12(frame, 1280, 720)

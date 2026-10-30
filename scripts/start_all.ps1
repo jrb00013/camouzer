@@ -24,11 +24,11 @@ powershell -ExecutionPolicy Bypass -File (Join-Path $Root 'scripts\install_virtu
 Write-Host '=== install python package ==='
 py -3 -m pip install -e $Root -q
 
-$args = @('-3', '-m', 'rednesscam', 'run', '--strength', "$Strength")
+$args = @('-3', '-m', 'camouzer', 'run', '--strength', "$Strength")
 if ($TestPattern) { $args += '--test-pattern' }
 if ($Preview) { $args += '--preview' }
 
-Write-Host '=== starting rednesscam feed ==='
-Write-Host 'Teams: Devices -> Camera -> RednessCam (Windows Virtual Camera)'
+Write-Host '=== starting camouzer feed ==='
+Write-Host 'Teams: Devices -> Camera -> Camouzer (Windows Virtual Camera)'
 Write-Host ("Command: py " + ($args -join ' '))
 & py @args

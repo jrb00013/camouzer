@@ -1,4 +1,4 @@
-"""End-to-end: webcam → redness filter → RednessCam shared memory."""
+"""End-to-end: webcam → redness filter → Camouzer shared memory."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def _test_pattern(frame_index: int) -> np.ndarray:
 
     cv2.putText(
         img,
-        f"RednessCam test #{frame_index}",
+        f"Camouzer test #{frame_index}",
         (40, 60),
         cv2.FONT_HERSHEY_SIMPLEX,
         1.2,
@@ -44,7 +44,7 @@ def run_pipeline(
     allow_test_fallback: bool = True,
 ) -> None:
     if sys.platform != "win32":
-        raise RuntimeError("rednesscam virtual-camera output requires Windows.")
+        raise RuntimeError("camouzer virtual-camera output requires Windows.")
 
     import cv2
 
@@ -52,7 +52,7 @@ def run_pipeline(
     using_pattern = test_pattern
     if not test_pattern:
         cam_name = device_name or "Logitech Webcam C930e"
-        print(f"[rednesscam] opening camera via ffmpeg MJPG ({cam_name})", flush=True)
+        print(f"[camouzer] opening camera via ffmpeg MJPG ({cam_name})", flush=True)
         try:
             from .ffmpeg_capture import FFmpegCamera
 
@@ -65,9 +65,9 @@ def run_pipeline(
             ok, probe = cap.read()
             if not ok or probe is None:
                 raise RuntimeError("ffmpeg opened but first frame failed")
-            print(f"[rednesscam] ffmpeg frame ok shape={probe.shape}", flush=True)
+            print(f"[camouzer] ffmpeg frame ok shape={probe.shape}", flush=True)
         except Exception as exc:
-            print(f"[rednesscam] ffmpeg path failed ({exc}); trying OpenCV", flush=True)
+            print(f"[camouzer] ffmpeg path failed ({exc}); trying OpenCV", flush=True)
             try:
                 cap = open_camera(
                     camera_index,
@@ -79,15 +79,15 @@ def run_pipeline(
             except RuntimeError as exc2:
                 if not allow_test_fallback:
                     raise
-                print(f"[rednesscam] WARN: {exc2}", flush=True)
-                print("[rednesscam] falling back to test pattern", flush=True)
+                print(f"[camouzer] WARN: {exc2}", flush=True)
+                print("[camouzer] falling back to test pattern", flush=True)
                 using_pattern = True
                 cap = None
 
-    print("[rednesscam] connecting to RednessCam shared memory...", flush=True)
+    print("[camouzer] connecting to Camouzer shared memory...", flush=True)
     writer = SharedMemoryWriter(timeout_s=90.0)
     mode = "test-pattern" if using_pattern else f"camera strength={strength:.2f}"
-    print(f"[rednesscam] live — {mode} @ {TARGET_WIDTH}x{TARGET_HEIGHT}. Ctrl+C to stop.", flush=True)
+    print(f"[camouzer] live — {mode} @ {TARGET_WIDTH}x{TARGET_HEIGHT}. Ctrl+C to stop.", flush=True)
 
     frames = 0
     t0 = time.time()
@@ -108,7 +108,7 @@ def run_pipeline(
 
             if preview:
                 shown = cv2.resize(filtered, (640, 360))
-                cv2.imshow("RednessCam preview (q quits)", shown)
+                cv2.imshow("Camouzer preview (q quits)", shown)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
 
@@ -118,9 +118,9 @@ def run_pipeline(
             if frames == 1 or frames % 60 == 0:
                 elapsed = time.time() - t0
                 fps = frames / elapsed if elapsed else 0.0
-                print(f"[rednesscam] frames={frames} ~{fps:.1f} fps", flush=True)
+                print(f"[camouzer] frames={frames} ~{fps:.1f} fps", flush=True)
     except KeyboardInterrupt:
-        print("\n[rednesscam] stopping...", flush=True)
+        print("\n[camouzer] stopping...", flush=True)
     finally:
         writer.close()
         if cap is not None:

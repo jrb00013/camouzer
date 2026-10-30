@@ -1,6 +1,6 @@
 # Full custom kernel camera driver (documented, not built in v1)
 
-RednessCam v1 uses **user-mode** Media Foundation virtual cameras (`MFCreateVirtualCamera` + COM `IMFMediaSource`). That is the supported Windows 11 path and what Discord enumerates today.
+Camouzer v1 uses **user-mode** Media Foundation virtual cameras (`MFCreateVirtualCamera` + COM `IMFMediaSource`). That is the supported Windows 11 path and what Discord enumerates today.
 
 If you ever need a **kernel** fake camera (ViGEm-style, visible even to apps that reject software sources, or pre-Win11), you are in AVStream / KMDF land. This doc is the map — not an implementation.
 
@@ -24,13 +24,13 @@ There is no supported one-file Python API that creates a kernel camera. You ship
    - WDK **Toaster** / general KMDF patterns for INF + PnP
    - DirectShow **virtual cam** filters (user-mode legacy) — Discord/Zoom increasingly prefer MF devices
 
-## Rough architecture for a kernel RednessCam
+## Rough architecture for a kernel Camouzer
 
 ```
 User app (Python/C++)
    │  DeviceIoControl / shared memory / queue
    ▼
-RednessCam.sys  (KMDF + AVStream)
+Camouzer.sys  (KMDF + AVStream)
    │  Capture pin, NV12 1920x1080@30
    ▼
 KS proxy / Frame Server

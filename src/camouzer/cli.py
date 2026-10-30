@@ -1,4 +1,4 @@
-"""CLI entrypoint: `rednesscam run`."""
+"""CLI entrypoint: `camouzer run`."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import sys
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="rednesscam",
-        description="Reduce facial redness and publish to the RednessCam Windows virtual camera.",
+        prog="camouzer",
+        description="Reduce facial redness and publish to the Camouzer Windows virtual camera.",
     )
     sub = p.add_subparsers(dest="cmd", required=True)
 

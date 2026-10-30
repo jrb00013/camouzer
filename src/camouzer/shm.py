@@ -1,4 +1,4 @@
-"""Windows Global shared-memory writer matching RednessCamSource.dll layout."""
+"""Windows Global shared-memory writer matching CamouzerSource.dll layout."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ import struct
 import time
 from ctypes import wintypes
 
-SHARED_MEM_NAME = "Global\\RednessCam_SharedMem"
-MUTEX_NAME = "Global\\RednessCam_Mutex"
+SHARED_MEM_NAME = "Global\\Camouzer_SharedMem"
+MUTEX_NAME = "Global\\Camouzer_Mutex"
 
 # Keep in sync with native/FrameServer.cpp + MediaStream.cpp
 TARGET_WIDTH = 1280
@@ -21,7 +21,7 @@ FILE_MAP_ALL_ACCESS = 0x000F001F
 
 
 class SharedMemoryWriter:
-    """Push NV12 frames into the RednessCam FrameServer shared mapping."""
+    """Push NV12 frames into the Camouzer FrameServer shared mapping."""
 
     def __init__(self, timeout_s: float = 60.0) -> None:
         self._k32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -60,13 +60,13 @@ class SharedMemoryWriter:
             time.sleep(0.25)
         if not self._h_map:
             raise RuntimeError(
-                "Could not open Global\\RednessCam_SharedMem. "
-                "Start RednessCamHost.exe first."
+                "Could not open Global\\Camouzer_SharedMem. "
+                "Start CamouzerHost.exe first."
             )
 
         ptr = self._k32.MapViewOfFile(self._h_map, FILE_MAP_ALL_ACCESS, 0, 0, TOTAL_SIZE)
         if not ptr:
-            raise RuntimeError("MapViewOfFile failed for RednessCam shared memory.")
+            raise RuntimeError("MapViewOfFile failed for Camouzer shared memory.")
         self._ptr = ptr
 
         SYNCHRONIZE = 0x00100000

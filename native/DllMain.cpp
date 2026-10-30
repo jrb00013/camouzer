@@ -7,14 +7,14 @@
 #include "Activator.h"
 #include "Logger.h"
 
-// The unique CLSID for the RednessCam Virtual Webcam Source
-DEFINE_GUID(CLSID_RednessCamMediaSource,
+// The unique CLSID for the Camouzer Virtual Webcam Source
+DEFINE_GUID(CLSID_CamouzerMediaSource,
     0xa7c4e291, 0x8f12, 0x4b6d, 0x9e, 0x3a, 0x1d, 0x5c, 0x8f, 0x0b, 0x4a, 0x27);
 
 static HMODULE g_hModule  = nullptr;
 static LONG    g_objCount = 0;
 
-class RednessCamClassFactory : public IClassFactory
+class CamouzerClassFactory : public IClassFactory
 {
     LONG _refCount = 1;
 
@@ -41,7 +41,7 @@ public:
 
     STDMETHODIMP CreateInstance(IUnknown* pOuter, REFIID riid, void** ppv) override
     {
-        Log("RednessCamClassFactory::CreateInstance called");
+        Log("CamouzerClassFactory::CreateInstance called");
         if (pOuter) return CLASS_E_NOAGGREGATION;
         if (!ppv)   return E_POINTER;
         *ppv = nullptr;
@@ -73,7 +73,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID /*lpReserved*/)
     if (fdwReason == DLL_PROCESS_ATTACH) {
         g_hModule = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
-        Log("RednessCamSource.dll loaded");
+        Log("CamouzerSource.dll loaded");
     }
     return TRUE;
 }
@@ -83,10 +83,10 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv)
     if (!ppv) return E_POINTER;
     *ppv = nullptr;
 
-    if (rclsid != CLSID_RednessCamMediaSource)
+    if (rclsid != CLSID_CamouzerMediaSource)
         return CLASS_E_CLASSNOTAVAILABLE;
 
-    auto factory = new (std::nothrow) RednessCamClassFactory();
+    auto factory = new (std::nothrow) CamouzerClassFactory();
     if (!factory) return E_OUTOFMEMORY;
 
     HRESULT hr = factory->QueryInterface(riid, ppv);
@@ -117,7 +117,7 @@ STDAPI DllRegisterServer()
     status = RegCreateKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, nullptr, 0, KEY_WRITE, nullptr, &hKey, nullptr);
     if (status != ERROR_SUCCESS) return HRESULT_FROM_WIN32(status);
 
-    const WCHAR desc[] = L"RednessCam Virtual Webcam Source";
+    const WCHAR desc[] = L"Camouzer Virtual Webcam Source";
     RegSetValueExW(hKey, nullptr, 0, REG_SZ, (const BYTE*)desc, sizeof(desc));
     RegCloseKey(hKey);
 

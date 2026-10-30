@@ -1,4 +1,4 @@
-# Reset Global\RednessCam_Shutdown so the host does not exit immediately.
+# Reset Global\Camouzer_Shutdown so the host does not exit immediately.
 $ErrorActionPreference = "Stop"
 Add-Type @"
 using System;
@@ -12,8 +12,8 @@ public static class NativeEvt {
   public static extern bool CloseHandle(IntPtr hObject);
 }
 "@
-$h = [NativeEvt]::CreateEvent([IntPtr]::Zero, $true, $false, "Global\RednessCam_Shutdown")
+$h = [NativeEvt]::CreateEvent([IntPtr]::Zero, $true, $false, "Global\Camouzer_Shutdown")
 if ($h -eq [IntPtr]::Zero) { throw "CreateEvent failed" }
 [void][NativeEvt]::ResetEvent($h)
 [void][NativeEvt]::CloseHandle($h)
-Write-Host 'Global\RednessCam_Shutdown reset'
+Write-Host 'Global\Camouzer_Shutdown reset'
